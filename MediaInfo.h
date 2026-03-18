@@ -21,32 +21,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 //
-// The MIT License( MIT )
-// The MIT License( MIT )
-//
-// Copyright( c ) 2020-2022 Scott Aron Bloom
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files( the "Software" ), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sub-license, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions :
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
+
 #ifndef __MEDIAINFO_H
 #define __MEDIAINFO_H
 
-#include "Towel42UtilsExport.h"
+#include "Towel42MediaUtilsExport.h"
 
 #include <QString>
 #include <QStringList>
@@ -65,7 +44,7 @@ namespace MediaInfoDLL
     class MediaInfo;
 }
 
-namespace NTowel42Utils
+namespace NTowel42MediaUtils
 {
     enum class EStreamType
     {
@@ -84,9 +63,9 @@ namespace NTowel42Utils
 namespace std
 {
     template<>
-    struct hash< NTowel42Utils::EStreamType >
+    struct hash< NTowel42MediaUtils::EStreamType >
     {
-        std::size_t operator()( const NTowel42Utils::EStreamType &ii ) const
+        std::size_t operator()( const NTowel42MediaUtils::EStreamType &ii ) const
         {
             auto tmp = static_cast< int >( ii );
             return std::hash< int >()( tmp );
@@ -94,7 +73,7 @@ namespace std
     };
 }
 
-namespace NTowel42Utils
+namespace NTowel42MediaUtils
 {
     class CFFMpegFormats;
     enum class EMediaTags
@@ -162,23 +141,23 @@ namespace NTowel42Utils
         eDefaultSubtitleStream,
         eLastTag
     };
-    TOWEL42_UTILS_EXPORT QString displayName( EMediaTags tag );
-    TOWEL42_UTILS_EXPORT EMediaTags fromDisplayName( const QString &tag );
-    TOWEL42_UTILS_EXPORT QString getMKVEditName( EMediaTags tag );
-    TOWEL42_UTILS_EXPORT bool isSettableTag( EMediaTags tag );
-    TOWEL42_UTILS_EXPORT QString mediaInfoTagName( EMediaTags tag );
-    TOWEL42_UTILS_EXPORT std::list< QString > toStringList( const std::list< EMediaTags > &keys );
+    TOWEL42_MEDIAUTILS_EXPORT QString displayName( EMediaTags tag );
+    TOWEL42_MEDIAUTILS_EXPORT EMediaTags fromDisplayName( const QString &tag );
+    TOWEL42_MEDIAUTILS_EXPORT QString getMKVEditName( EMediaTags tag );
+    TOWEL42_MEDIAUTILS_EXPORT bool isSettableTag( EMediaTags tag );
+    TOWEL42_MEDIAUTILS_EXPORT QString mediaInfoTagName( EMediaTags tag );
+    TOWEL42_MEDIAUTILS_EXPORT std::list< QString > toStringList( const std::list< EMediaTags > &keys );
 
-    TOWEL42_UTILS_EXPORT EMediaTags fromTagName( const QString &tag );
+    TOWEL42_MEDIAUTILS_EXPORT EMediaTags fromTagName( const QString &tag );
 
 }
 
 namespace std
 {
     template<>
-    struct hash< NTowel42Utils::EMediaTags >
+    struct hash< NTowel42MediaUtils::EMediaTags >
     {
-        std::size_t operator()( const NTowel42Utils::EMediaTags &ii ) const
+        std::size_t operator()( const NTowel42MediaUtils::EMediaTags &ii ) const
         {
             auto tmp = static_cast< int >( ii );
             return std::hash< int >()( tmp );
@@ -186,14 +165,14 @@ namespace std
     };
 }
 
-namespace NTowel42Utils
+namespace NTowel42MediaUtils
 {
     enum class EMediaTags;
     using TMediaTagMap = std::unordered_map< EMediaTags, QVariant >;
 
     class CStreamData;
     class CMediaInfoImpl;
-    struct TOWEL42_UTILS_EXPORT SResolutionInfo
+    struct TOWEL42_MEDIAUTILS_EXPORT SResolutionInfo
     {
         std::pair< int, int > fResolution{ 0, 0 };
         bool fInterlaced{ false };
@@ -215,7 +194,7 @@ namespace NTowel42Utils
     private:
     };
 
-    class TOWEL42_UTILS_EXPORT CMediaInfo : public QObject
+    class TOWEL42_MEDIAUTILS_EXPORT CMediaInfo : public QObject
     {
         Q_OBJECT;
         friend class CMediaInfoMgr;
@@ -226,19 +205,19 @@ namespace NTowel42Utils
         CMediaInfo( const QFileInfo &fi, bool delayLoad );
 
     public:
-        static SResolutionInfo k8KResolution;
-        static SResolutionInfo k4KResolution;
-        static SResolutionInfo k1080pResolution;
-        static SResolutionInfo k1080iResolution;
-        static SResolutionInfo k720Resolution;
-        static SResolutionInfo k480Resolution;
-
         static void setFFProbeEXE( const QString &path );
         static QString ffprobeEXE();
 
         CMediaInfo( const QString &fileName );
         CMediaInfo( const QFileInfo &fi );
         ~CMediaInfo();
+
+        static SResolutionInfo k8KResolution();
+        static SResolutionInfo k4KResolution();
+        static SResolutionInfo k1080pResolution();
+        static SResolutionInfo k1080iResolution();
+        static SResolutionInfo k720Resolution();
+        static SResolutionInfo k480Resolution();
 
         bool load();
         bool aOK() const;
@@ -313,7 +292,7 @@ namespace NTowel42Utils
         std::shared_ptr< CMediaInfoImpl > fImpl;
     };
 
-    class TOWEL42_UTILS_EXPORT CMediaInfoMgr : public QObject
+    class TOWEL42_MEDIAUTILS_EXPORT CMediaInfoMgr : public QObject
     {
         CMediaInfoMgr() {}
         Q_OBJECT;
@@ -328,7 +307,7 @@ namespace NTowel42Utils
         bool isMediaCached( const QString &fileName ) const;
         bool isMediaCached( const QFileInfo &fi ) const;
 
-        void mediaLoaded(const QString &fileName);
+        void mediaLoaded( const QString &fileName );
         void mediaQueued( const QString &fileName );
         void mediaFinished( const QString &fileName, bool success );
 

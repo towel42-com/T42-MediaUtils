@@ -45,7 +45,7 @@
 #ifndef __MKVUTILS_H
 #define __MKVUTILS_H
 
-#include "Towel42UtilsExport.h"
+#include "Towel42MediaUtilsExport.h"
 
 #include <cstdint>
 #include <unordered_map>
@@ -62,7 +62,7 @@ namespace MediaInfoDLL
     enum class EMediaTags;
 }
 
-namespace NTowel42Utils
+namespace NTowel42MediaUtils
 {
     enum class EMediaTags;
 }
@@ -70,15 +70,15 @@ namespace NTowel42Utils
 namespace std
 {
     template<>
-    struct hash< NTowel42Utils::EMediaTags >;
+    struct hash< NTowel42MediaUtils::EMediaTags >;
 };
 
-namespace NTowel42Utils
+namespace NTowel42MediaUtils
 {
     using TMediaTagMap = std::unordered_map< EMediaTags, QVariant >;
     using TMediaTagPair = std::pair< EMediaTags, QVariant >;
-    TOWEL42_UTILS_EXPORT bool setMediaTags( const QString &fileName, const TMediaTagMap &tags, const QString &mkvPropEdit, QString *msg = nullptr );
-    TOWEL42_UTILS_EXPORT std::vector< double > getChapterStarts( const QString &fileName, const QString &ffprobeExe, QString &msg );
+    TOWEL42_MEDIAUTILS_EXPORT bool setMediaTags( const QString &fileName, const TMediaTagMap &tags, const QString &mkvPropEdit, QString *msg = nullptr );
+    TOWEL42_MEDIAUTILS_EXPORT std::vector< double > getChapterStarts( const QString &fileName, const QString &ffprobeExe, QString &msg );
 }
 
 #endif

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>NTowel42Utils::CSetMKVTags</class>
- <widget class="QDialog" name="NTowel42Utils::CSetMKVTags">
+ <class>NTowel42MediaUtils::CSetMKVTags</class>
+ <widget class="QDialog" name="NTowel42MediaUtils::CSetMKVTags">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -57,7 +57,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>accepted()</signal>
-   <receiver>NTowel42Utils::CSetMKVTags</receiver>
+   <receiver>NTowel42MediaUtils::CSetMKVTags</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -73,7 +73,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>rejected()</signal>
-   <receiver>NTowel42Utils::CSetMKVTags</receiver>
+   <receiver>NTowel42MediaUtils::CSetMKVTags</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">

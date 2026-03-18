@@ -21,36 +21,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 //
-// The MIT License( MIT )
-//
-// Copyright( c ) 2020-2022 Scott Aron Bloom
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files( the "Software" ), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sub-license, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions :
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
 
 #include "MediaInfo.h"
 #include "MKVUtils.h"
-#include "FileBasedCache.h"
+#include "T42-Utils/FileBasedCache.h"
 #include "FFMpegFormats.h"
-#include "QtUtils.h"
 
-#include "utils.h"
-#include "FileUtils.h"
+#include "T42-Utils/QtUtils.h"
+#include "T42-Utils/utils.h"
+#include "T42-Utils/FileUtils.h"
+
 #include <QFileInfo>
 #include <QRegularExpression>
 #include <QDebug>
@@ -63,7 +43,7 @@
 
 #include "MediaInfoDLL/MediaInfoDLL_Static.h"
 
-namespace NTowel42Utils
+namespace NTowel42MediaUtils
 {
     class CStreamData
     {
@@ -463,7 +443,7 @@ namespace NTowel42Utils
     class CMediaInfoImpl
     {
     public:
-        static CFileBasedCache< std::shared_ptr< CMediaInfoImpl > > sMediaInfoCache;
+        static NTowel42Utils::CFileBasedCache< std::shared_ptr< CMediaInfoImpl > > sMediaInfoCache;
         static QString sFFProbeEXE;
 
         static std::shared_ptr< CMediaInfoImpl > createImpl()
@@ -931,15 +911,15 @@ namespace NTowel42Utils
                 EMediaTags::eLength,
                 []( uint64_t numMSecs )
                 {
-                    CTimeString ts( numMSecs );
+                    NTowel42Utils::CTimeString ts( numMSecs );
                     return ts.toString( "hh:mm:ss" );
                 } );
 
-            cleanFunc( EMediaTags::eVideoBitrateString, []( uint64_t bitRate ) { return NFileUtils::byteSizeString( bitRate, true, false, 3, true, "bps" ); } );
-            cleanFunc( EMediaTags::eAudioSampleRateString, []( uint64_t bitRate ) { return NFileUtils::byteSizeString( bitRate, true, false, 2, true, "Hz" ); } );
-            cleanFunc( EMediaTags::eAudioBitrateString, []( uint64_t bitRate ) { return NFileUtils::byteSizeString( bitRate, true, false, 2, true, "bps" ); } );
-            cleanFunc( EMediaTags::eTotalAudioBitrateString, []( uint64_t bitRate ) { return NFileUtils::byteSizeString( bitRate, true, false, 2, true, "bps" ); } );
-            cleanFunc( EMediaTags::eOverAllBitrateString, []( uint64_t bitRate ) { return NFileUtils::byteSizeString( bitRate, true, false, 3, true, "bps" ); } );
+            cleanFunc( EMediaTags::eVideoBitrateString, []( uint64_t bitRate ) { return NTowel42Utils::NFileUtils::byteSizeString( bitRate, true, false, 3, true, "bps" ); } );
+            cleanFunc( EMediaTags::eAudioSampleRateString, []( uint64_t bitRate ) { return NTowel42Utils::NFileUtils::byteSizeString( bitRate, true, false, 2, true, "Hz" ); } );
+            cleanFunc( EMediaTags::eAudioBitrateString, []( uint64_t bitRate ) { return NTowel42Utils::NFileUtils::byteSizeString( bitRate, true, false, 2, true, "bps" ); } );
+            cleanFunc( EMediaTags::eTotalAudioBitrateString, []( uint64_t bitRate ) { return NTowel42Utils::NFileUtils::byteSizeString( bitRate, true, false, 2, true, "bps" ); } );
+            cleanFunc( EMediaTags::eOverAllBitrateString, []( uint64_t bitRate ) { return NTowel42Utils::NFileUtils::byteSizeString( bitRate, true, false, 3, true, "bps" ); } );
         }
 
         QVariant getMediaTag( size_t streamNum, EMediaTags tag ) const
@@ -1092,7 +1072,7 @@ namespace NTowel42Utils
             return retVal;
         }
 
-        QVariant getAllValues( NTowel42Utils::EStreamType whichStream, EMediaTags tag ) const
+        QVariant getAllValues( NTowel42MediaUtils::EStreamType whichStream, EMediaTags tag ) const
         {
             auto values = findAllValues( whichStream, tag );
             auto defStreamNum = static_cast< int >( defaultStreamNum( whichStream ) );
@@ -1302,7 +1282,7 @@ namespace NTowel42Utils
         bool fQueued{ false };
     };
 
-    CFileBasedCache< std::shared_ptr< CMediaInfoImpl > > CMediaInfoImpl::sMediaInfoCache;
+    NTowel42Utils::CFileBasedCache< std::shared_ptr< CMediaInfoImpl > > CMediaInfoImpl::sMediaInfoCache;
     QString CMediaInfoImpl::sFFProbeEXE;
 
     void CMediaInfo::setFFProbeEXE( const QString &path )
@@ -1511,12 +1491,36 @@ namespace NTowel42Utils
         return { width, height };
     }
 
-    SResolutionInfo CMediaInfo::k8KResolution = { { 7680, 4320 }, false, 60.0, 30 };
-    SResolutionInfo CMediaInfo::k4KResolution = { { 3840, 2160 }, false, 60.0, 24 };
-    SResolutionInfo CMediaInfo::k1080pResolution = { { 1920, 1080 }, false, 60.0, 24 };
-    SResolutionInfo CMediaInfo::k1080iResolution = { { 1920, 1080 }, true, 30.0, 24 };
-    SResolutionInfo CMediaInfo::k720Resolution = { { 1280, 720 }, false, 24.0, 24 };
-    SResolutionInfo CMediaInfo::k480Resolution = { { 640, 480 }, false, 24.0, 24 };
+    SResolutionInfo CMediaInfo::k8KResolution()
+    {
+        return { { 7680, 4320 }, false, 60.0, 30 };
+    }
+
+    SResolutionInfo CMediaInfo::k4KResolution()
+    {
+        return { { 3840, 2160 }, false, 60.0, 24 };
+    }
+
+    
+    SResolutionInfo CMediaInfo::k1080pResolution()
+    {
+        return { { 1920, 1080 }, false, 60.0, 24 };
+    }
+    
+    SResolutionInfo CMediaInfo::k1080iResolution()
+    {
+        return { { 1920, 1080 }, true, 30.0, 24 };
+    }
+    
+    SResolutionInfo CMediaInfo::k720Resolution()
+    {
+        return { { 1280, 720 }, false, 24.0, 24 };
+    }
+    
+    SResolutionInfo CMediaInfo::k480Resolution()
+    {
+        return { { 640, 480 }, false, 24.0, 24 };
+    }
 
     uint64_t SResolutionInfo::idealBitrate() const
     {
@@ -1531,27 +1535,27 @@ namespace NTowel42Utils
 
     bool SResolutionInfo::isGreaterThan4kResolution( double threshold /*= 0.2 */ ) const
     {
-        return isGreaterThanResolution( CMediaInfo::k4KResolution.fResolution, threshold );
+        return isGreaterThanResolution( CMediaInfo::k4KResolution().fResolution, threshold );
     }
 
     bool SResolutionInfo::is4kResolution( double threshold /* = 0.2 */ ) const
     {
-        return isResolution( CMediaInfo::k4KResolution.fResolution, threshold );
+        return isResolution( CMediaInfo::k4KResolution().fResolution, threshold );
     }
 
     bool SResolutionInfo::isGreaterThanHDResolution( double threshold /* = 0.0 */ ) const
     {
-        return isGreaterThanResolution( CMediaInfo::k1080pResolution.fResolution, threshold );
+        return isGreaterThanResolution( CMediaInfo::k1080pResolution().fResolution, threshold );
     }
 
     bool SResolutionInfo::isHDResolution( double threshold /* = 0.2 */ ) const
     {
-        return isResolution( CMediaInfo::k1080pResolution.fResolution, threshold );
+        return isResolution( CMediaInfo::k1080pResolution().fResolution, threshold );
     }
 
     bool SResolutionInfo::isSubHDResolution( double threshold /* = 0.2 */ ) const
     {
-        return isLessThanResolution( CMediaInfo::k1080pResolution.fResolution, threshold );
+        return isLessThanResolution( CMediaInfo::k1080pResolution().fResolution, threshold );
     }
 
     bool SResolutionInfo::isResolution( const std::pair< int, int > &targetRes, double threshold /* = 0.2 */ ) const

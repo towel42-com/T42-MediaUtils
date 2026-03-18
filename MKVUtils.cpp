@@ -44,10 +44,10 @@
 // SOFTWARE.
 
 #include "MKVUtils.h"
-#include "QtUtils.h"
+#include "T42-Utils/QtUtils.h"
 #include "MediaInfo.h"
 
-#include "Towel42UtilsResources.h"
+#include "Towel42MediaUtilsResources.h"
 
 #include <QObject>
 #include <QFileInfo>
@@ -58,7 +58,7 @@
 #include <QDir>
 #include <QTemporaryFile>
 
-namespace NTowel42Utils
+namespace NTowel42MediaUtils
 {
     bool setMediaTags( const QString &fileName, const TMediaTagMap &newTagValues, const QString &mkvPropEdit, QString *msg /*=nullptr */ )
     {
@@ -73,7 +73,7 @@ namespace NTowel42Utils
             return false;
         }
 
-        auto file = QFile( ":/Towel42UtilsResources/BlankMKVTags.xml" );
+        auto file = QFile( ":/Towel42MediaUtilsResources/BlankMKVTags.xml" );
         if ( !file.open( QFile::ReadOnly ) )
         {
             if ( msg )

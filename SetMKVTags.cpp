@@ -48,15 +48,15 @@
 
 #include "MediaInfo.h"
 #include "MKVUtils.h"
-#include "AutoWaitCursor.h"
-#include "UtilityViews.h"
-#include "QtUtils.h"
+#include "T42-Utils/AutoWaitCursor.h"
+#include "T42-Utils/UtilityViews.h"
+#include "T42-Utils/QtUtils.h"
 
 #include <QMessageBox>
 #include <QTimer>
 #include <QFileInfo>
 
-namespace NTowel42Utils
+namespace NTowel42MediaUtils
 {
     CSetMKVTags::CSetMKVTags( const QString &fileName, const QString &mkvPropEdit, QWidget *parent ) :
         QDialog( parent ),
@@ -69,7 +69,7 @@ namespace NTowel42Utils
         fImpl->setupUi( this );
         fImpl->fileName->setText( fileName );
         fImpl->fileName->setReadOnly( true );
-        fImpl->tags->setItemDelegateForColumn( 0, new CNoEditDelegate( this ) );
+        fImpl->tags->setItemDelegateForColumn( 0, new NTowel42Utils::CNoEditDelegate( this ) );
         QTimer::singleShot( 0, this, &CSetMKVTags::slotLoadTags );
     }
 
@@ -113,8 +113,8 @@ namespace NTowel42Utils
         }
 
         QString msg;
-        CAutoWaitCursor awc;
-        if ( !NTowel42Utils::setMediaTags( fImpl->fileName->text(), tags, fMKVPropEditExe, &msg ) )
+        NTowel42Utils::CAutoWaitCursor awc;
+        if ( !setMediaTags( fImpl->fileName->text(), tags, fMKVPropEditExe, &msg ) )
         {
             QMessageBox::critical( this, tr( "Problem setting tags" ), msg, QMessageBox::Ok );
             return;

@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/Towel42MediaUtilsResources">
+        <file>BlankMKVTags.xml</file>
+    </qresource>
+</RCC>

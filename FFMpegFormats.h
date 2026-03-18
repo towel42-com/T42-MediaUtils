@@ -21,10 +21,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef _TOWEL42_UTILS_FFMPEGUTILS_H
-#define _TOWEL42_UTILS_FFMPEGUTILS_H
+#ifndef _TOWEL42_MEDIAUTILS_FFMPEGUTILS_H
+#define _TOWEL42_MEDIAUTILS_FFMPEGUTILS_H
 
-#include "Towel42UtilsExport.h"
+#include "Towel42MediaUtilsExport.h"
 #include <QStringList>
 #include <QString>
 
@@ -33,7 +33,7 @@
 #include <set>
 #include <optionaL>
 class QProgressDialog;
-namespace NTowel42Utils
+namespace NTowel42MediaUtils
 {
     enum class EFormatType
     {
@@ -43,11 +43,11 @@ namespace NTowel42Utils
         eSubtitle,
         eImage
     };
-    TOWEL42_UTILS_EXPORT QString toString( EFormatType type );
+    TOWEL42_MEDIAUTILS_EXPORT QString toString( EFormatType type );
     using TFormatMap = std::unordered_map< EFormatType, std::unordered_map< QString, QStringList > >;
     using TCodecToEncoderDecoderMap = std::unordered_map< EFormatType, std::unordered_multimap< QString, QString > >;
 
-    class TOWEL42_UTILS_EXPORT CFFMpegFormats
+    class TOWEL42_MEDIAUTILS_EXPORT CFFMpegFormats
     {
     public:
         CFFMpegFormats();
@@ -85,7 +85,7 @@ namespace NTowel42Utils
         TFormatMap mediaEncoderFormatExtensions() const { return fMediaEncoderFormatExtensions; }
         TFormatMap mediaDecoderFormatExtensions() const { return fMediaDecoderFormatExtensions; }
 
-        std::set< QString > getCodecAliases( const QString &formatName ) const; // gets the tersename, the verbose name, the codecname, the encoder name and the decoder name
+        std::set< QString > getCodecAliases( const QString &formatName ) const;   // gets the tersename, the verbose name, the codecname, the encoder name and the decoder name
         bool isHEVCCodec( const QString &codec ) const { return isCodec( "hevc", codec ); }
         bool isCodec( const QString &checkCodecName, const QString &mediaCodecName ) const;
 
@@ -129,8 +129,8 @@ namespace NTowel42Utils
         QStringList getImageEncoderExtensions( const QStringList &exclude = {} ) const;
         QStringList getImageDecoderExtensions( const QStringList &exclude = {} ) const;
 
-        QStringList getEncoderExtensions( NTowel42Utils::EFormatType extensionType, const QStringList &exclude = {} ) const;
-        QStringList getDecoderExtensions( NTowel42Utils::EFormatType extensionType, const QStringList &exclude = {} ) const;
+        QStringList getEncoderExtensions( NTowel42MediaUtils::EFormatType extensionType, const QStringList &exclude = {} ) const;
+        QStringList getDecoderExtensions( NTowel42MediaUtils::EFormatType extensionType, const QStringList &exclude = {} ) const;
 
         QString getPrimaryEncoderExtensionForFormat( const QString &formatName, const QStringList &exclude = {} ) const;
         QStringList getEncoderExtensionsForFormat( const QString &formatName, const QStringList &exclude = {} ) const;
@@ -170,7 +170,7 @@ namespace NTowel42Utils
         std::optional< QStringList > decoderFormatLoaded( const QString &formatName ) const;
 
         QStringList getExtensionsForFormat( const TFormatMap &map, const QString &formatName, const QStringList &exclude ) const;
-        QStringList getExtensions( const TFormatMap &map, NTowel42Utils::EFormatType extensionType, const QStringList &exclude ) const;
+        QStringList getExtensions( const TFormatMap &map, NTowel42MediaUtils::EFormatType extensionType, const QStringList &exclude ) const;
 
         bool fLoaded{ false };
         struct SStringListPair

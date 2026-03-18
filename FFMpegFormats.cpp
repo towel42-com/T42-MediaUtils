@@ -22,7 +22,7 @@
 // SOFTWARE.
 
 #include "FFMpegFormats.h"
-#include "GPUDetect.h"
+#include "T42-Utils/GPUDetect.h"
 
 #include <QProcess>
 #include <QFileInfo>
@@ -32,7 +32,7 @@
 
 #include <set>
 
-namespace NTowel42Utils
+namespace NTowel42MediaUtils
 {
     QStringList removeFromlist( const QStringList &list, const QString &regex )
     {
@@ -61,7 +61,7 @@ namespace NTowel42Utils
 
     void cleanLists( const QString &intel, const QString &nvidia, const QString &amd, QStringList &terse, QStringList &verbose )
     {
-        SGPUInfo info;
+        NTowel42Utils::SGPUInfo info;
         QStringList regExs;
         if ( !info.fIntel )
         {
@@ -545,7 +545,7 @@ namespace NTowel42Utils
         Q_ASSERT( validate() );
     }
 
-    QStringList CFFMpegFormats::getExtensions( const TFormatMap &map, NTowel42Utils::EFormatType extensionType, const QStringList &exclude ) const
+    QStringList CFFMpegFormats::getExtensions( const TFormatMap &map, EFormatType extensionType, const QStringList &exclude ) const
     {
         auto pos = map.find( extensionType );
         if ( pos == map.end() )
@@ -561,12 +561,12 @@ namespace NTowel42Utils
         return std::move( removeFromlist( retVal, exclude ) );
     }
 
-    QStringList CFFMpegFormats::getEncoderExtensions( NTowel42Utils::EFormatType extensionType, const QStringList &exclude ) const
+    QStringList CFFMpegFormats::getEncoderExtensions( EFormatType extensionType, const QStringList &exclude ) const
     {
         return getExtensions( fMediaEncoderFormatExtensions, extensionType, exclude );
     }
 
-    QStringList CFFMpegFormats::getDecoderExtensions( NTowel42Utils::EFormatType extensionType, const QStringList &exclude ) const
+    QStringList CFFMpegFormats::getDecoderExtensions( EFormatType extensionType, const QStringList &exclude ) const
     {
         return getExtensions( fMediaDecoderFormatExtensions, extensionType, exclude );
     }
@@ -1336,15 +1336,15 @@ namespace NTowel42Utils
         switch ( type )
         {
             case EFormatType::eUnknown:
-                return "NTowel42Utils::EFormatType::eUnknown";
+                return "NTowel42MediaUtils::EFormatType::eUnknown";
             case EFormatType::eVideo:
-                return "NTowel42Utils::EFormatType::eVideo";
+                return "NTowel42MediaUtils::EFormatType::eVideo";
             case EFormatType::eAudio:
-                return "NTowel42Utils::EFormatType::eAudio";
+                return "NTowel42MediaUtils::EFormatType::eAudio";
             case EFormatType::eSubtitle:
-                return "NTowel42Utils::EFormatType::eSubtitle";
+                return "NTowel42MediaUtils::EFormatType::eSubtitle";
             case EFormatType::eImage:
-                return "NTowel42Utils::EFormatType::eImage";
+                return "NTowel42MediaUtils::EFormatType::eImage";
         }
         return toString( EFormatType::eUnknown );
     }

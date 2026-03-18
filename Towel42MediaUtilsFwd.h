@@ -43,33 +43,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef _SETMKVTAGS_H
-#define _SETMKVTAGS_H
+#ifndef __TOWEL42MEDIAUTILSFWD_H
+#define __TOWEL42MEDIAUTILSFWD_H
 
 #include "Towel42MediaUtilsExport.h"
-
-#include <QDialog>
-#include <memory>
-
-namespace NTowel42MediaUtils
+namespace NTowel42Utils
 {
-    namespace Ui
-    {
-        class CSetMKVTags;
-    };
-    class TOWEL42_MEDIAUTILS_EXPORT CSetMKVTags : public QDialog
-    {
-        Q_OBJECT
-    public:
-        CSetMKVTags( const QString &fileName, const QString &mkvPropEditExe, QWidget *parent = nullptr );
-        virtual ~CSetMKVTags() override;
-        virtual void accept() override;
-    public Q_SLOTS:
-        void slotLoadTags();
-    Q_SIGNALS:
-    private:
-        std::unique_ptr< Ui::CSetMKVTags > fImpl;
-        QString fMKVPropEditExe;
-    };
 }
 #endif
