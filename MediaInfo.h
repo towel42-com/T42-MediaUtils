@@ -200,17 +200,26 @@ namespace NTowel42MediaUtils
         friend class CMediaInfoMgr;
 
     private:
-        CMediaInfo();
-        CMediaInfo( const QString &fileName, bool delayLoad );
-        CMediaInfo( const QFileInfo &fi, bool delayLoad );
+        struct SPrivate
+        {
+        };
 
     public:
-        static void setFFProbeEXE( const QString &path );
-        static QString ffprobeEXE();
+        CMediaInfo( const SPrivate & pri );
+        CMediaInfo( const QString &fileName, bool delayLoad, const SPrivate &pri );
+        CMediaInfo( const QFileInfo &fi, bool delayLoad, const SPrivate &pri );
 
         CMediaInfo( const QString &fileName );
         CMediaInfo( const QFileInfo &fi );
+
+        static std::shared_ptr< CMediaInfo > create();
+        static std::shared_ptr< CMediaInfo > create( const QString &fileName, bool delayLoad );
+        static std::shared_ptr< CMediaInfo > create( const QFileInfo &fi, bool delayLoad );
+
         ~CMediaInfo();
+
+        static void setFFProbeEXE( const QString &path );
+        static QString ffprobeEXE();
 
         static SResolutionInfo k8KResolution();
         static SResolutionInfo k4KResolution();
@@ -218,6 +227,8 @@ namespace NTowel42MediaUtils
         static SResolutionInfo k1080iResolution();
         static SResolutionInfo k720Resolution();
         static SResolutionInfo k480Resolution();
+
+        QString statusText() const;
 
         bool load();
         bool aOK() const;
@@ -294,7 +305,7 @@ namespace NTowel42MediaUtils
 
     class TOWEL42_MEDIAUTILS_EXPORT CMediaInfoMgr : public QObject
     {
-        CMediaInfoMgr() {}
+        CMediaInfoMgr();
         Q_OBJECT;
 
     public:
@@ -311,16 +322,20 @@ namespace NTowel42MediaUtils
         void mediaQueued( const QString &fileName );
         void mediaFinished( const QString &fileName, bool success );
 
+        bool isProcessing();
+
+    private Q_SLOTS:
+        void slotMediaInfoQueueTimout();
     Q_SIGNALS:
         void sigMediaLoaded( const QString &fileName );
         void sigMediaQueued( const QString &fileName );
         void sigMediaFinished( const QString &fileName, bool success );
-        void sigStatusMessage( const QString &msg );
+        void sigStatusMessage( const QString &msg, bool debugData );
+        void sigFinishedProcessingMedia();
 
     private:
-        void updateStatus();
-
-        void removeFromMediaInfoQueue( const QString &fileName );
+        QTimer *fMediaInfoQueueTimer{ nullptr };
+        std::optional< int > fNumQueuedEmpty;
 
         QMutex fMutex;
         std::unordered_map< QString, std::shared_ptr< CMediaInfo > > fQueuedMediaInfo;   // store here while media is loading

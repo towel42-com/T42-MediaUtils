@@ -484,8 +484,15 @@ namespace NTowel42MediaUtils
 
         ~CMediaInfoImpl() {}
 
+        QString statusText() const
+        {
+            auto retVal = QStringLiteral( "%1: Queued: %2" ).arg( fFileName ).arg( isQueued() ? "Yes" : "No" );
+            return retVal;
+        }
+
         bool isQueued() const { return fQueued; };
         void setQueued( bool value ) { fQueued = value; }
+
         bool queueLoad()
         {
             QFileInfo fi( fFileName );
@@ -494,19 +501,20 @@ namespace NTowel42MediaUtils
 
             if ( !aOK() && !isQueued() )
             {
-                setQueued( true );
                 QThreadPool::globalInstance()->start(
                     [ this ]()
                     {
                         Q_ASSERT( CMediaInfoMgr::instance() );
+                        setQueued( true );
                         emit CMediaInfoMgr::instance() -> mediaQueued( fFileName );
                         if ( !load() )
                         {
+                            setQueued( false );
                             emit CMediaInfoMgr::instance() -> mediaFinished( fFileName, false );
                             return;
                         }
-                        emit CMediaInfoMgr::instance() -> mediaFinished( fFileName, true );
                         setQueued( false );
+                        emit CMediaInfoMgr::instance() -> mediaFinished( fFileName, true );
                         emit CMediaInfoMgr::instance() -> mediaLoaded( fFileName );
                     } );
                 return true;
@@ -1295,31 +1303,46 @@ namespace NTowel42MediaUtils
         return CMediaInfoImpl::sFFProbeEXE;
     }
 
-    CMediaInfo::CMediaInfo() :
+    CMediaInfo::CMediaInfo( const SPrivate & ) :
         fImpl( nullptr )
     {
         fImpl = CMediaInfoImpl::createImpl();
     }
 
-    CMediaInfo::CMediaInfo( const QString &fileName, bool loadNow /*= true*/ ) :
+    CMediaInfo::CMediaInfo( const QString &fileName, bool loadNow /*= true*/, const SPrivate & ) :
         fImpl( nullptr )
     {
         fImpl = CMediaInfoImpl::createImpl( fileName, loadNow );
     }
 
-    CMediaInfo::CMediaInfo( const QFileInfo &fi, bool loadNow /*= true*/ ) :
+    CMediaInfo::CMediaInfo( const QFileInfo &fi, bool loadNow /*= true*/, const SPrivate & ) :
         fImpl( nullptr )
     {
         fImpl = CMediaInfoImpl::createImpl( fi, loadNow );
     }
+    
+    std::shared_ptr< NTowel42MediaUtils::CMediaInfo > CMediaInfo::create()
+    {
+        return std::make_shared< CMediaInfo >( SPrivate() );
+    }
+
+    std::shared_ptr< NTowel42MediaUtils::CMediaInfo > CMediaInfo::create( const QString &fileName, bool delayLoad )
+    {
+        return std::make_shared< CMediaInfo >( fileName, delayLoad, SPrivate() );
+    }
+
+    std::shared_ptr< NTowel42MediaUtils::CMediaInfo > CMediaInfo::create( const QFileInfo &fi, bool delayLoad )
+    {
+        return std::make_shared< CMediaInfo >( fi, delayLoad, SPrivate() );
+    }
 
     CMediaInfo::CMediaInfo( const QString &fileName ) :   // loads immediately use the mgr for delayed load
-        CMediaInfo( fileName, true )
+        CMediaInfo( fileName, true, SPrivate() )
     {
     }
 
     CMediaInfo::CMediaInfo( const QFileInfo &fi ) :
-        CMediaInfo( fi, true )
+        CMediaInfo( fi, true, SPrivate() )
     {
     }
 
@@ -1501,25 +1524,29 @@ namespace NTowel42MediaUtils
         return { { 3840, 2160 }, false, 60.0, 24 };
     }
 
-    
     SResolutionInfo CMediaInfo::k1080pResolution()
     {
         return { { 1920, 1080 }, false, 60.0, 24 };
     }
-    
+
     SResolutionInfo CMediaInfo::k1080iResolution()
     {
         return { { 1920, 1080 }, true, 30.0, 24 };
     }
-    
+
     SResolutionInfo CMediaInfo::k720Resolution()
     {
         return { { 1280, 720 }, false, 24.0, 24 };
     }
-    
+
     SResolutionInfo CMediaInfo::k480Resolution()
     {
         return { { 640, 480 }, false, 24.0, 24 };
+    }
+
+    QString CMediaInfo::statusText() const
+    {
+        return fImpl->statusText();
     }
 
     uint64_t SResolutionInfo::idealBitrate() const
@@ -1865,6 +1892,14 @@ namespace NTowel42MediaUtils
               EMediaTags::eDiscnumber } );
     }
 
+    CMediaInfoMgr::CMediaInfoMgr()
+    {
+        fMediaInfoQueueTimer = new QTimer( this );
+        fMediaInfoQueueTimer->setSingleShot( false );
+        fMediaInfoQueueTimer->setInterval( 1000 );
+        connect( fMediaInfoQueueTimer, &QTimer::timeout, this, &CMediaInfoMgr::slotMediaInfoQueueTimout );
+    }
+
     CMediaInfoMgr *CMediaInfoMgr::instance()
     {
         static CMediaInfoMgr retVal;
@@ -1878,16 +1913,25 @@ namespace NTowel42MediaUtils
 
     std::shared_ptr< CMediaInfo > CMediaInfoMgr::getMediaInfo( const QFileInfo &fi )
     {
-        auto retVal = std::shared_ptr< CMediaInfo >( new CMediaInfo( fi, false ) );
+        auto retVal = CMediaInfo::create( fi, false );
         fMutex.lock();
+        auto queued = retVal->queueLoad();
+        auto pos = fQueuedMediaInfo.find( fi.absoluteFilePath() );
+        if ( !queued || ( pos != fQueuedMediaInfo.end() ) )
+        {
+            fMutex.unlock();
+            return retVal;
+        }
+
         fQueuedMediaInfo[ fi.absoluteFilePath() ] = retVal;
+        if ( !fMediaInfoQueueTimer->isActive() )
+            fMediaInfoQueueTimer->start();
         fMutex.unlock();
 
-        auto queued = retVal->queueLoad();
-        if ( !queued )
-        {
-            removeFromMediaInfoQueue( fi.absoluteFilePath() );
-        }
+        if ( !fNumQueuedEmpty.has_value() )
+            fNumQueuedEmpty = 0;
+
+        slotMediaInfoQueueTimout();
 
         return retVal;
     }
@@ -1905,35 +1949,69 @@ namespace NTowel42MediaUtils
     void CMediaInfoMgr::mediaLoaded( const QString &fileName )
     {
         emit sigMediaLoaded( fileName );
-        updateStatus();
     }
 
     void CMediaInfoMgr::mediaQueued( const QString &fileName )
     {
         emit sigMediaQueued( fileName );
-        updateStatus();
     }
 
     void CMediaInfoMgr::mediaFinished( const QString &fileName, bool success )
     {
         emit sigMediaFinished( fileName, success );
-        updateStatus();
     }
 
-    void CMediaInfoMgr::updateStatus()
+    bool CMediaInfoMgr::isProcessing()
     {
         fMutex.lock();
-        auto msg = QStringLiteral( "%1 files remaining to be processed." ).arg( fQueuedMediaInfo.size() );
+        bool processing = false;
+        for ( auto &&ii : fQueuedMediaInfo )
+        {
+            if ( ii.second->isQueued() || !ii.second->aOK() )
+            {
+                processing = true;
+                break;
+            }
+        }
         fMutex.unlock();
-        emit sigStatusMessage( msg );
+        return processing;
     }
 
-    void CMediaInfoMgr::removeFromMediaInfoQueue( const QString &fileName )
+    void CMediaInfoMgr::slotMediaInfoQueueTimout()
     {
         fMutex.lock();
-        auto pos = fQueuedMediaInfo.find( fileName );
-        if ( pos != fQueuedMediaInfo.end() )
-            fQueuedMediaInfo.erase( pos );
+
+        auto numProcessed = 0;
+        auto numUnknown = 0;
+        QStringList beingProcessed;
+        for ( auto &&ii : fQueuedMediaInfo )
+        {
+            if ( ii.second->isQueued() )
+                beingProcessed << ii.first;
+            else if ( ii.second->aOK() )
+                numProcessed++;
+            else
+                numUnknown++;
+        }
+
+        if ( ( numUnknown == 0 ) && beingProcessed.isEmpty() )
+        {
+            fNumQueuedEmpty.value() = fNumQueuedEmpty.value() + 1;
+        }
+
         fMutex.unlock();
+        if ( fNumQueuedEmpty.value() > 3 )
+        {
+            fMutex.lock();
+            fQueuedMediaInfo.clear();
+            fNumQueuedEmpty.reset();
+            fMediaInfoQueueTimer->stop();
+            fMutex.unlock();
+            emit sigFinishedProcessingMedia();
+        }
+
+        if ( !beingProcessed.isEmpty() )
+            emit sigStatusMessage( QStringLiteral( "Currently Processing %1:\n    %2" ).arg( beingProcessed.size() ).arg( beingProcessed.join( "\n    " ) ), true );
+        emit sigStatusMessage( QStringLiteral( "%1 processed, %2 processing, %4 in an unknown state." ).arg( numProcessed ).arg( beingProcessed.size() ).arg( numUnknown ), true );
     }
 }
