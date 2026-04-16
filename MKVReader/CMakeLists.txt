@@ -28,9 +28,9 @@ find_package(AddUnitTest REQUIRED)
 find_package(Qt6SrcMoc REQUIRED)
 
 find_package(IncludeProjectSettings REQUIRED)
+project( MKVReader ) 
 include( ${CMAKE_CURRENT_LIST_DIR}/include.cmake )
-project( ${_PROJECT_NAME} ) 
-IncludeProjectSettings(QT ${USE_QT})
+IncludeProjectSettings()
 
 add_library(${PROJECT_NAME} STATIC
     ${_PROJECT_DEPENDENCIES} 

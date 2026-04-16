@@ -47,7 +47,7 @@ if ( TOWEL42_MKVUTILS )
 endif()
 
 include( ${CMAKE_CURRENT_LIST_DIR}/include.cmake )
-project( ${_PROJECT_NAME} ) 
+project( Towel42MediaUtils ) 
 
 find_package(IncludeProjectSettings REQUIRED)
 IncludeProjectSettings()
@@ -85,11 +85,9 @@ if ( TOWEL42_MEDIAUTILS_DLL )
                                 FOLDER ${FOLDER_NAME} 
                                 DEBUG_POSTFIX d
    ) 
+    INSTALL( TARGETS ${PROJECT_NAME} RUNTIME DESTINATION .)
     if ( WIN32 )
-        INSTALL( FILES $<TARGET_FILE_DIR:${PROJECT_NAME}>/$<TARGET_FILE_BASE_NAME:${PROJECT_NAME}>.dll DESTINATION . )
-        INSTALL( FILES $<TARGET_FILE_DIR:${PROJECT_NAME}>/$<TARGET_FILE_BASE_NAME:${PROJECT_NAME}>.pdb DESTINATION . CONFIGURATIONS Debug RelWithDebInfo )
-    else()
-        INSTALL( FILES $<TARGET_FILE_DIR:${PROJECT_NAME}>/lib$<TARGET_FILE_BASE_NAME:${PROJECT_NAME}>.so DESTINATION . )
+        INSTALL( FILES $<TARGET_PDB_FILE:${PROJECT_NAME}> DESTINATION . CONFIGURATIONS Debug RelWithDebInfo )
     endif()
 else()
     set_target_properties( ${PROJECT_NAME} PROPERTIES FOLDER ${FOLDER_NAME} )
