@@ -1238,7 +1238,10 @@ namespace NTowel42MediaUtils
 
                 auto streamData = this->getStreamData( streamType, streamNum );
                 if ( !streamData )
+                {
+                    qWarning().noquote().nospace() << "Stream # " << streamNum << " Type: " << toString( streamType ) << " could not be found\n";
                     continue;
+                }
 
                 streamData->replaceData( "FFMpegCodec", codec );
 
@@ -1320,7 +1323,7 @@ namespace NTowel42MediaUtils
     {
         fImpl = CMediaInfoImpl::createImpl( fi, loadNow );
     }
-    
+
     std::shared_ptr< NTowel42MediaUtils::CMediaInfo > CMediaInfo::create()
     {
         return std::make_shared< CMediaInfo >( SPrivate() );
@@ -1632,6 +1635,7 @@ namespace NTowel42MediaUtils
     {
         return getResolutionInfo().isSubHDResolution( threshold );
     }
+
     bool CMediaInfo::isGreaterThanHDResolution( double threshold /* = 0.0 */ ) const
     {
         return getResolutionInfo().isGreaterThanHDResolution( threshold );
