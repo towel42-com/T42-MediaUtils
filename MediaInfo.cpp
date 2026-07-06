@@ -1056,15 +1056,9 @@ namespace NTowel42MediaUtils
                 || ( tag == EMediaTags::eAllSubtitleCodecs ) )
             {
                 QVariant value;
-                if ( tag == EMediaTags::eAllSubtitleLanguages )
-                {
-                    value = getAllValues( EStreamType::eText, tag );
-                }
-                else if ( tag == EMediaTags::eAllSubtitleDispString )
-                {
-                    value = getAllValues( EStreamType::eText, tag );
-                }
-                else if ( tag == EMediaTags::eAllSubtitleCodecs )
+                if ( ( tag == EMediaTags::eAllSubtitleLanguages ) //
+                     || ( tag == EMediaTags::eAllSubtitleDispString )   //
+                     || ( tag == EMediaTags::eAllSubtitleCodecs ) )
                 {
                     value = getAllValues( EStreamType::eText, tag );
                 }
