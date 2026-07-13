@@ -506,16 +506,15 @@ namespace NTowel42MediaUtils
                     {
                         Q_ASSERT( CMediaInfoMgr::instance() );
                         setQueued( true );
-                        emit CMediaInfoMgr::instance() -> mediaQueued( fFileName );
+
+                        emit CMediaInfoMgr::instance() -> sigStatusMessage( QObject::tr( "Media '%1' queued for processing" ).arg( fFileName ), false );
                         if ( !load() )
-                        {
-                            setQueued( false );
-                            emit CMediaInfoMgr::instance() -> mediaFinished( fFileName, false );
-                            return;
-                        }
+                            emit CMediaInfoMgr::instance() -> sigStatusMessage( QObject::tr( "--> Error loading media info for '%1'" ).arg( fFileName ), false );
+                        else
+                            emit CMediaInfoMgr::instance() -> sigStatusMessage( QObject::tr( "--> Successfully loaded media info for '%1'" ).arg( fFileName ), false );
+
                         setQueued( false );
-                        emit CMediaInfoMgr::instance() -> mediaFinished( fFileName, true );
-                        emit CMediaInfoMgr::instance() -> mediaLoaded( fFileName );
+                        emit CMediaInfoMgr::instance() -> sigStatusMessage( QObject::tr( "--> Finished processing Media '%1'" ).arg( fFileName ), false );
                     } );
                 return true;
             }
@@ -1056,7 +1055,7 @@ namespace NTowel42MediaUtils
                 || ( tag == EMediaTags::eAllSubtitleCodecs ) )
             {
                 QVariant value;
-                if ( ( tag == EMediaTags::eAllSubtitleLanguages ) //
+                if ( ( tag == EMediaTags::eAllSubtitleLanguages )   //
                      || ( tag == EMediaTags::eAllSubtitleDispString )   //
                      || ( tag == EMediaTags::eAllSubtitleCodecs ) )
                 {
@@ -1942,21 +1941,6 @@ namespace NTowel42MediaUtils
     bool CMediaInfoMgr::isMediaCached( const QFileInfo &fi ) const
     {
         return CMediaInfoImpl::mediaExists( fi );
-    }
-
-    void CMediaInfoMgr::mediaLoaded( const QString &fileName )
-    {
-        emit sigMediaLoaded( fileName );
-    }
-
-    void CMediaInfoMgr::mediaQueued( const QString &fileName )
-    {
-        emit sigMediaQueued( fileName );
-    }
-
-    void CMediaInfoMgr::mediaFinished( const QString &fileName, bool success )
-    {
-        emit sigMediaFinished( fileName, success );
     }
 
     bool CMediaInfoMgr::isProcessing()

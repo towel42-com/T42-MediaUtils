@@ -318,10 +318,6 @@ namespace NTowel42MediaUtils
         bool isMediaCached( const QString &fileName ) const;
         bool isMediaCached( const QFileInfo &fi ) const;
 
-        void mediaLoaded( const QString &fileName );
-        void mediaQueued( const QString &fileName );
-        void mediaFinished( const QString &fileName, bool success );
-
         bool isProcessing();
 
     private Q_SLOTS:
