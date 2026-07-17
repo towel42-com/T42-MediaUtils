@@ -537,7 +537,7 @@ namespace NTowel42MediaUtils
         {
             auto mediaInfo = std::make_unique< MediaInfoDLL::MediaInfo >();
 
-            fVersion = QString::fromStdWString( mediaInfo->Option( __T( "Info_Version" ), __T( "0.7.13;MediaInfoDLL_Example_MSVC;0.7.13" ) ) );
+            fVersion = QString::fromStdWString( mediaInfo->Option( __T( "Info_Version" ), __T( "MediaInfoLib - v23.03" ) ) );
             fAOK = mediaInfo->Open( fFileName.toStdWString() ) != 0;
             if ( fAOK )
             {
@@ -1894,7 +1894,7 @@ namespace NTowel42MediaUtils
         fMediaInfoQueueTimer = new QTimer( this );
         fMediaInfoQueueTimer->setSingleShot( false );
         fMediaInfoQueueTimer->setInterval( 1000 );
-        connect( fMediaInfoQueueTimer, &QTimer::timeout, this, &CMediaInfoMgr::slotMediaInfoQueueTimout );
+        connect( fMediaInfoQueueTimer, &QTimer::timeout, this, &CMediaInfoMgr::slotMediaInfoQueueTimeout );
     }
 
     CMediaInfoMgr *CMediaInfoMgr::instance()
@@ -1925,10 +1925,7 @@ namespace NTowel42MediaUtils
             fMediaInfoQueueTimer->start();
         fMutex.unlock();
 
-        if ( !fNumQueuedEmpty.has_value() )
-            fNumQueuedEmpty = 0;
-
-        slotMediaInfoQueueTimout();
+        slotMediaInfoQueueTimeout();
 
         return retVal;
     }
@@ -1959,7 +1956,7 @@ namespace NTowel42MediaUtils
         return processing;
     }
 
-    void CMediaInfoMgr::slotMediaInfoQueueTimout()
+    void CMediaInfoMgr::slotMediaInfoQueueTimeout()
     {
         fMutex.lock();
 
@@ -1978,11 +1975,11 @@ namespace NTowel42MediaUtils
 
         if ( ( numUnknown == 0 ) && beingProcessed.isEmpty() )
         {
-            fNumQueuedEmpty.value() = fNumQueuedEmpty.value() + 1;
+            fNumQueuedEmpty = fNumQueuedEmpty.value_or( 0 ) + 1;
         }
 
         fMutex.unlock();
-        if ( fNumQueuedEmpty.value() > 3 )
+        if ( fNumQueuedEmpty.value_or( 0 ) > 3 )   // wait for 3 seconds of empty queue before signaling finished
         {
             fMutex.lock();
             fQueuedMediaInfo.clear();

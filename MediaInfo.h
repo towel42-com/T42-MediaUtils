@@ -321,7 +321,7 @@ namespace NTowel42MediaUtils
         bool isProcessing();
 
     private Q_SLOTS:
-        void slotMediaInfoQueueTimout();
+        void slotMediaInfoQueueTimeout();
     Q_SIGNALS:
         void sigMediaLoaded( const QString &fileName );
         void sigMediaQueued( const QString &fileName );
