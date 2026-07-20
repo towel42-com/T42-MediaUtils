@@ -508,13 +508,19 @@ namespace NTowel42MediaUtils
                         setQueued( true );
 
                         emit CMediaInfoMgr::instance() -> sigStatusMessage( QObject::tr( "Media '%1' queued for processing" ).arg( fFileName ), false );
-                        if ( !load() )
-                            emit CMediaInfoMgr::instance() -> sigStatusMessage( QObject::tr( "--> Error loading media info for '%1'" ).arg( fFileName ), false );
-                        else
+                        emit CMediaInfoMgr::instance() -> sigMediaQueued( fFileName );
+                        bool loadedOK = load();
+                        if ( loadedOK )
+                        {
                             emit CMediaInfoMgr::instance() -> sigStatusMessage( QObject::tr( "--> Successfully loaded media info for '%1'" ).arg( fFileName ), false );
+                            emit CMediaInfoMgr::instance() -> sigMediaLoaded( fFileName );
+                        }
+                        else
+                            emit CMediaInfoMgr::instance() -> sigStatusMessage( QObject::tr( "--> Error loading media info for '%1'" ).arg( fFileName ), false );
 
                         setQueued( false );
                         emit CMediaInfoMgr::instance() -> sigStatusMessage( QObject::tr( "--> Finished processing Media '%1'" ).arg( fFileName ), false );
+                        emit CMediaInfoMgr::instance() -> sigMediaFinished( fFileName, loadedOK );
                     } );
                 return true;
             }
