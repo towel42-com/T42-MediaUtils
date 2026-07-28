@@ -446,6 +446,7 @@ namespace NTowel42MediaUtils
         static NTowel42Utils::CFileBasedCache< std::shared_ptr< CMediaInfoImpl > > sMediaInfoCache;
         static QString sFFProbeEXE;
 
+        static void clearCache() { sMediaInfoCache.clear(); }
         static std::shared_ptr< CMediaInfoImpl > createImpl()
         {
             auto retVal = sMediaInfoCache.find( QString() );
@@ -2023,6 +2024,11 @@ namespace NTowel42MediaUtils
     bool CMediaInfoMgr::isMediaCached( const QFileInfo &fi ) const
     {
         return CMediaInfoImpl::mediaExists( fi );
+    }
+
+    void CMediaInfo::clearCache()
+    {
+        CMediaInfoImpl::clearCache();
     }
 
     bool CMediaInfoMgr::isProcessing()

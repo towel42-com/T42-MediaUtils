@@ -216,6 +216,8 @@ namespace NTowel42MediaUtils
         static std::shared_ptr< CMediaInfo > create( const QString &fileName, bool delayLoad );
         static std::shared_ptr< CMediaInfo > create( const QFileInfo &fi, bool delayLoad );
 
+        static void clearCache();
+
         ~CMediaInfo();
 
         static void setFFProbeEXE( const QString &path );
