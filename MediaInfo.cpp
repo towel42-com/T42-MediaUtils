@@ -577,6 +577,24 @@ namespace NTowel42MediaUtils
         int numVideoStreams() const { return getMediaTag( -1, EMediaTags::eNumVideoStreams ).toInt(); }
         int numSubTitleStreams() const { return getMediaTag( -1, EMediaTags::eNumSubtitleStreams ).toInt(); }
 
+        bool isDVProfile5() const
+        {
+            auto values = findAllValues( EStreamType::eVideo, mediaInfoTagName( EMediaTags::eHDRInfo ) );
+            auto regexp = QRegularExpression( R"__(dvhe.(\d+))__" );
+            for ( auto &&value : values )
+            {
+                auto match = regexp.match( value );
+                if ( match.hasMatch() )
+                {
+                    bool aOK = false;
+                    auto value = match.captured( 1 ).toInt( &aOK );
+                    if ( aOK && ( value == 5 ) )
+                        return true;
+                }
+            }
+            return false;
+        }
+
         bool hasVideoCodec( const QString &checkCodecName, CFFMpegFormats *ffmpegFormats ) const
         {
             auto values = findAllValues( EStreamType::eVideo, mediaInfoTagName( EMediaTags::eAllVideoCodecs ) );
@@ -679,6 +697,22 @@ namespace NTowel42MediaUtils
             return stream;
         }
 
+        std::optional< uint64_t > calculateBitRateForStream( EStreamType whichStream, size_t streamNum ) const
+        {
+            // prefer to calculate the value, as MediaInfo is often wrong... but the size is not always stored :(
+            auto numBits = calculateNumBitsForStream( whichStream, streamNum );
+            auto durationMS = getDurationMS( whichStream, streamNum );
+            return calculateBitRate( numBits, durationMS );
+        }
+
+        std::optional< uint64_t > calculateBitRateForStream( std::shared_ptr< CStreamData > stream, EStreamType whichStream ) const
+        {
+            // prefer to calculate the value, as MediaInfo is often wrong... but the size is not always stored :(
+            auto numBits = calculateNumBitsForStream( stream, whichStream );
+            auto durationMS = getDurationMS( stream );
+            return calculateBitRate( numBits, durationMS );
+        }
+
         uint64_t getBitRate( EStreamType whichStream, size_t streamNum )
         {
             auto retVal = calculateBitRateForStream( whichStream, streamNum );
@@ -696,11 +730,31 @@ namespace NTowel42MediaUtils
         QString findValue( EStreamType whichStream, size_t streamNum, EMediaTags key ) const { return findValue( whichStream, streamNum, mediaInfoTagName( key ) ); }
         QString findValue( EStreamType whichStream, size_t streamNum, const QString &key ) const
         {
+            //dumpAllStreamData();
+            auto stream = getStreamData( whichStream, streamNum );
+            auto retVal = findValue( stream, whichStream, key );
+            if ( !retVal.has_value() )
+            {
+                auto &&streamData = getAllStreamData( whichStream );
+                for ( auto &&currStream : streamData )
+                {
+                    auto curr = currStream->value( key );
+                    if ( curr.isEmpty() )
+                        continue;
+                    return curr;
+                }
+            }
+            return retVal.value_or( QString() );
+        }
+
+        std::optional< QString > findValue( std::shared_ptr< CStreamData > stream, EStreamType whichStream, const QString &key ) const
+        {
+            if ( !stream )
+                return {};
+
             if ( key == "BitRate" )
             {
-                auto retVal = calculateBitRateStringForStream( whichStream, streamNum );
-                if ( retVal.has_value() )
-                    return retVal.value();
+                return calculateBitRateStringForStream( stream, whichStream ).value_or( "" );
             }
             else if ( key == "TotalAudioBitRate" )
             {
@@ -710,26 +764,19 @@ namespace NTowel42MediaUtils
             }
             else if ( key == "Duration" )
             {
-                auto value = getDurationMS( whichStream, streamNum );
+                auto value = getDurationMS( stream );
                 if ( value.has_value() )
                     return QString::number( value.value() );
             }
-
-            //dumpAllStreamData();
-            auto stream = getStreamData( whichStream, streamNum );
-            if ( !stream )
-                return {};
+            else if ( key == "HDRInfo" )
+            {
+                return getHDRInfo( stream ).value_or( "" );
+            }
 
             auto value = stream->value( key );
             if ( value.isEmpty() )
             {
-                auto &&streamData = getAllStreamData( whichStream );
-                for ( auto &&currStream : streamData )
-                {
-                    value = currStream->value( key );
-                    if ( value.isEmpty() )
-                        continue;
-                }
+                return {};
             }
             return value;
         }
@@ -785,9 +832,13 @@ namespace NTowel42MediaUtils
         std::optional< uint64_t > calculateNumBitsForStream( EStreamType whichStream, size_t streamNum ) const
         {
             auto stream = getStreamData( whichStream, streamNum );
+            return calculateNumBitsForStream( stream, whichStream );
+        }
+
+        std::optional< uint64_t > calculateNumBitsForStream( std::shared_ptr< CStreamData > stream, EStreamType whichStream ) const
+        {
             if ( !stream )
                 return {};
-
             QString sizeKey = "StreamSizeBytes";
             bool isBytes = true;
             if ( whichStream == EStreamType::eGeneral )
@@ -821,17 +872,14 @@ namespace NTowel42MediaUtils
             return {};
         }
 
-        std::optional< uint64_t > calculateBitRateForStream( EStreamType whichStream, size_t streamNum ) const
-        {
-            // prefer to calculate the value, as MediaInfo is often wrong... but the size is not always stored :(
-            auto numBits = calculateNumBitsForStream( whichStream, streamNum );
-            auto durationMS = getDurationMS( whichStream, streamNum );
-            return calculateBitRate( numBits, durationMS );
-        }
-
         std::optional< uint64_t > getDurationMS( EStreamType whichStream, size_t streamNum ) const
         {
             auto stream = getStreamData( whichStream, streamNum );
+            return getDurationMS( stream );
+        }
+
+        std::optional< uint64_t > getDurationMS( std::shared_ptr< CStreamData > stream ) const
+        {
             if ( !stream )
                 return {};
 
@@ -851,12 +899,33 @@ namespace NTowel42MediaUtils
             return {};
         }
 
-        std::optional< QString > calculateBitRateStringForStream( EStreamType whichStream, size_t streamNum ) const
+        std::optional< QString > calculateBitRateStringForStream( std::shared_ptr< CStreamData > stream, EStreamType whichStream ) const
         {
-            auto retVal = calculateBitRateForStream( whichStream, streamNum );
+            auto retVal = calculateBitRateForStream( stream, whichStream );
             if ( retVal.has_value() )
                 return QString::number( retVal.value() );
             return {};
+        }
+
+        std::optional< QString > getHDRInfo( std::shared_ptr< CStreamData > stream ) const
+        {
+            if ( !stream )
+                return {};
+
+            auto hdrFormat = stream->value( "HDR_Format" );
+            auto hdrProfile = stream->value( "HDR_Format_Profile" );
+            while ( hdrProfile.endsWith( '/' ) )
+                hdrProfile = hdrProfile.left( hdrProfile.length() - 1 );
+            hdrProfile = hdrProfile.trimmed();
+            hdrFormat = hdrFormat.trimmed();
+
+            auto tmp = QStringList( { hdrFormat, hdrProfile } );
+            tmp.removeAll( QString() );
+            auto retVal = tmp.join( "-" );
+
+            if ( retVal.isEmpty() )
+                return {};
+            return retVal;
         }
 
         QStringList findDefaultValues( EStreamType whichStream, const std::list< EMediaTags > &keys ) const { return findDefaultValues( whichStream, toStringList( keys ) ); }
@@ -876,7 +945,12 @@ namespace NTowel42MediaUtils
             QStringList retVal;
             for ( auto &&currStream : streamData )
             {
-                retVal << currStream->values( keys );
+                for ( auto &&key : keys )
+                {
+                    auto value = findValue( currStream, whichStream, key );
+                    if ( !value.value_or( QString() ).isEmpty() )
+                        retVal << value.value_or( QString() );
+                }
             }
 
             return retVal;
@@ -1392,6 +1466,11 @@ namespace NTowel42MediaUtils
         return fImpl->hasVideoCodec( checkCodecName, ffmpegFormats );
     }
 
+    bool CMediaInfo::isDVProfile5() const
+    {
+        return fImpl->isDVProfile5();
+    }
+
     bool CMediaInfo::isContainerFormat( const QString &formatName, CFFMpegFormats *ffmpegFormats ) const
     {
         return fImpl->isContainerFormat( formatName, ffmpegFormats );
@@ -1831,7 +1910,7 @@ namespace NTowel42MediaUtils
             case EMediaTags::eTotalAudioBitrateString:
                 return "TotalAudioBitRate";
             case EMediaTags::eHDRInfo:
-                return "HDR_Format/String";
+                return "HDRInfo";
             case EMediaTags::eBitsPerPixel:
                 return "BitsPerPixel";
             case EMediaTags::eBitDepth:

@@ -240,6 +240,8 @@ namespace NTowel42MediaUtils
         bool isDefaultAudioCodec( const QString &checkCodecName, CFFMpegFormats *ffmpegFormats ) const;
         bool isDefaultAudioCodecAAC( CFFMpegFormats *ffmpegFormats, int maxNumChannels ) const;
         bool hasVideoCodec( const QString &checkCodecName, CFFMpegFormats *ffmpegFormats ) const;
+        bool isDVProfile5() const;
+
         bool isContainerFormat( const QString &formatName, CFFMpegFormats *ffmpegFormats ) const;
         bool isCodec( const QString &checkCodecName, const QString &mediaCodecName, CFFMpegFormats *ffmpegFormats );
         bool isHEVCCodec( QString mediaCodecName, CFFMpegFormats *ffmpegFormats );
